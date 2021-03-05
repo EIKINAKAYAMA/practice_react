@@ -73,9 +73,7 @@ class Game extends React.Component {
       return;
     }
 
-    this.state.histories.forEach(function(e){
-      e.selected = false
-    })
+    this.state.histories.forEach(history => history.selected = false)
 
     //数値をXかOに変更して、代入
     history.squares[i] = this.state.histories.length % 2 == 0 ? 'X' : 'O';
