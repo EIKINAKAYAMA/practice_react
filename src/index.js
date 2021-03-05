@@ -52,65 +52,61 @@ class Game extends React.Component {
   constructor(props){
     super(props);
     this.state = {
-      history:[{
-        squares: Array(9).fill(null),
-        point: -1,
-        selected: false,
+      histories:[{
+        squares: Array(16).fill(null),
+        point: -1
       }],
-      stepNumber: 0,
-      xIsNext: true,
+      step: 0
     }
   }
 
   handleClick(i) {
-    const history = this.state.history.slice(0, this.state.stepNumber + 1);
-    const current = history[history.length - 1];
-    const squares = current.squares.slice();
+    console.log('i:', i)
+    const history = {
+      squares: this.state.histories[this.state.histories.length - 1].squares.slice(0),
+      point: i,
+      selected: false
+    }
 
     // 勝利判定、勝利の場合はXかOが返却、判定負荷の場合はNULLが返却
-    if (calculateWinner(squares) || squares[i]) {
+    if (calculateWinner(history.squares) || history.squares[i]) {
       return;
     }
     //数値をXかOに変更して、代入
-    squares[i] = this.state.xIsNext ? 'X' : 'O';
+    history.squares[i] = this.state.histories.length % 2 == 0 ? 'X' : 'O';
     this.setState({
-      history: history.concat([{
-        squares: squares,
-        point: i,
-        selected: false,
-      }]),
-      stepNumber: history.length,
-      xIsNext: !this.state.xIsNext,
+      histories: this.state.histories.concat([history]),
+      step: this.state.histories.length
     })
   }
 
   jumpTo(step){
-    const history = this.state.history.slice(0, this.state.stepNumber);
+    console.log('step:', step)
+    const histories = this.state.histories.map((history, index) => {
+      history.selected = index === step;
+      return history;
+    })
     this.setState({
-      history: history.push([{ //concatではない
-        selected: true,
-      }]),
-      stepNumber: step,
-      xIsNext: (step % 2) === 0,
+      histories: histories,
+      step: step
     });
   }
 
   render() {
-    const history = this.state.history;
-    const current = history[this.state.stepNumber];
-    const winner =  calculateWinner(current.squares);
+    const histories = this.state.histories;
+    const current = histories[histories.length - 1]
+    const winner = calculateWinner(current.squares);
     const status = winner ? "Winner: " + winner : "Next player: " + (this.state.xIsNext ? "X" : "O");
 
-    const moves = history.map((step, move) =>{
-      console.log('move:',move);
-      const desc = move ?
-        `Go to move # ${move}` : 'Go to game start';
+    const moves = histories.map((history, index) =>{
+      console.log('index:',index);
+      const desc = index ? `Go to index # ${index}` : 'Go to game start';
       return (
-        <li key={move}>
+        <li key={index}>
           <button onClick={() => {
             console.log("TEST");
-            this.jumpTo(move);
-          }} style={step.selected ? {fontWeight: 'bold'} : { fontWeight: 'normal'}} >{desc}</button>
+            this.jumpTo(index);
+          }} style={history.selected ? {fontWeight: 'bold'} : { fontWeight: 'normal'}} >{desc}</button>
         </li>
       )
     })
@@ -119,7 +115,7 @@ class Game extends React.Component {
       <div className="game">
         <div className="game-board">
           <Board 
-            squares={current.squares}
+            squares={this.state.histories[this.state.step].squares}
             onClick={(i) => this.handleClick(i)}
           />
         </div>
