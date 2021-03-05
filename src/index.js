@@ -72,11 +72,16 @@ class Game extends React.Component {
     if (calculateWinner(history.squares) || history.squares[i]) {
       return;
     }
+
+    this.state.histories.forEach(function(e){
+      e.selected = false
+    })
+
     //数値をXかOに変更して、代入
     history.squares[i] = this.state.histories.length % 2 == 0 ? 'X' : 'O';
     this.setState({
       histories: this.state.histories.concat([history]),
-      step: this.state.histories.length
+      step: this.state.histories.length,
     })
   }
 
