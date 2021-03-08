@@ -61,7 +61,10 @@ class Game extends React.Component {
   }
 
   handleClick(i) {
-    console.log('i:', i)
+    if(this.state.step != this.state.histories.length - 1) {
+      this.state.histories = this.state.histories.slice(0, this.state.step + 1);
+    }
+
     const history = {
       squares: this.state.histories[this.state.histories.length - 1].squares.slice(0),
       point: i,
@@ -74,9 +77,8 @@ class Game extends React.Component {
     }
 
     this.state.histories.forEach(history => history.selected = false)
-
     //数値をXかOに変更して、代入
-    history.squares[i] = this.state.histories.length % 2 == 0 ? 'X' : 'O';
+    history.squares[i] = this.state.histories.length % 2 == 0 ? 'O' : 'X';
     this.setState({
       histories: this.state.histories.concat([history]),
       step: this.state.histories.length,
@@ -84,7 +86,6 @@ class Game extends React.Component {
   }
 
   jumpTo(step){
-    console.log('step:', step)
     const histories = this.state.histories.map((history, index) => {
       history.selected = index === step;
       return history;
@@ -99,15 +100,13 @@ class Game extends React.Component {
     const histories = this.state.histories;
     const current = histories[histories.length - 1]
     const winner = calculateWinner(current.squares);
-    const status = winner ? "Winner: " + winner : "Next player: " + (this.state.xIsNext ? "X" : "O");
+    const status = winner ? "Winner: " + winner : "Next player: " + (this.state.step % 2 == 0 ? "X" : "O");
 
     const moves = histories.map((history, index) =>{
-      console.log('index:',index);
       const desc = index ? `Go to index # ${index}` : 'Go to game start';
       return (
         <li key={index}>
           <button onClick={() => {
-            console.log("TEST");
             this.jumpTo(index);
           }} style={history.selected ? {fontWeight: 'bold'} : { fontWeight: 'normal'}} >{desc}</button>
         </li>
@@ -125,7 +124,7 @@ class Game extends React.Component {
         <div className="game-info">
           <div>
             { status }         
-            { current.point !== -1 ? <p>Coordinate: (col:{current.point % 4 + 1}, row:{Math.floor(current.point/4 + 1)}, player: { this.state.xIsNext ? 'O' : 'X' })</p>
+            { current.point !== -1 ? <p>Coordinate: (col:{current.point % 4 + 1}, row:{Math.floor(current.point/4 + 1)}, player: { this.state.step % 2 == 0 ? 'O' : 'X' })</p>
               : <p>Let's play</p>}
           </div>
           <ol>{moves}</ol>
