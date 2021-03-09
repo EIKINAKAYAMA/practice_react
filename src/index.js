@@ -104,6 +104,7 @@ class Game extends React.Component {
 
       console.log(this.state.histories)
       console.log(this.state.step)
+      console.log(this.state.step)
     }
     
   }
