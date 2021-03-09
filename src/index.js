@@ -16,7 +16,7 @@ class Board extends React.Component {
     return <Square value={this.props.squares[i]} onClick ={() => this.props.onClick(i)}/>;
   }
 
-  // boardをループで表示
+  // パラダイムについて考える
   render() {
     const board = [];
 
@@ -26,8 +26,8 @@ class Board extends React.Component {
         const num = i * 4 + j;
         row.push(this.renderSquare(num));
       }
-      //keyエラーが発生するのはなぜ？
-      board.push(<div key={i} className="board-row">{row}</div>)
+      //keyエラーが発生するのはなぜ？ アルファベットをつける。
+      board.push(<div key={"a"+ i} className="board-row">{row}</div>)
     }
 
     return (
@@ -38,79 +38,105 @@ class Board extends React.Component {
   }
 }
 
-
-//昇・降順のToggleを別クラスで判定用に保持
-class Toggle extends React.Component{
-  constructor(props){
-    super(props);
-    this.state = {
-      isToggleOn: false,
-    }
-  }
-
-  toggleClick =() => {
-    this.setState({
-      isToggleOn: !this.state.isToggleOn
-    })
-  }
-
-  render(){
-    return (
-      <button onClick={this.toggleClick}>
-        {this.state.isToggleOn ? 'ON' : 'OFF'}
-      </button>
-    )
-  }
-}
-
 class Game extends React.Component {
   constructor(props){
     super(props);
     this.state = {
       histories:[{
         squares: Array(16).fill(null),
-        point: -1
+        point: -1,
       }],
       step: 0,
+      isToggleOn: true,
     }
   }
 
   handleClick(i) {
-    //選択された履歴時の配列の長さをを正として、そこからゲームを継続させる
-    if(this.state.step !== this.state.histories.length - 1) {
-      this.state.histories = this.state.histories.slice(0, this.state.step + 1);
-    }
+    
+    if(this.state.isToggleOn){
+      //etStateは最後、仮でセット。 
+      const histories = (this.state.step !== this.state.histories.length - 1)
+        ? this.state.histories.slice(0, this.state.step + 1)
+        :this.state.histories
 
-    const history = {
-      squares: this.state.histories[this.state.histories.length - 1].squares.slice(0),
-      point: i,
-      selected: false,
-    }
+      const history = {
+        squares: histories[histories.length - 1].squares.slice(0),
+        point: i,
+        selected: false,
+      }
 
-    // 勝利判定、勝利の場合はXかOが返却、判定負荷の場合はNULLが返却
-    if (calculateWinner(history.squares) || history.squares[i]) {
-      return;
-    }
+      // 勝利判定、勝利の場合はXかOが返却、判定負荷の場合はNULLが返却
+      if (calculateWinner(history.squares) || history.squares[i]) {
+        return;
+      }
 
-    this.state.histories.forEach(history => history.selected = false)
-    //数値をXかOに変更して、代入
-    history.squares[i] = this.state.histories.length % 2 === 0 ? 'O' : 'X';
-    this.setState({
-      histories: this.state.histories.concat([history]),
-      step: this.state.histories.length,
-    })
+      histories.forEach(history => history.selected = false)
+      //数値をXかOに変更して、代入
+      history.squares[i] = histories.length % 2 === 0 ? 'O' : 'X';
+
+      this.setState({
+        histories: histories.concat([history]),
+        step: histories.length,
+      })
+    }else{
+      const histories = (this.state.step !== this.state.histories.length - 1)
+        ? this.state.histories.slice(-(this.state.step + 1), this.state.histories.length)
+        : this.state.histories
+      
+      const history = {
+        squares: histories[histories.length - 1].squares.slice(0),
+        point: i,
+        selected: false,
+      }
+      if (calculateWinner(history.squares) || history.squares[i]) {
+        return;
+      }
+
+      histories.forEach(history => history.selected = false)
+      //数値をXかOに変更して、代入
+      history.squares[i] = histories.length % 2 === 0 ? 'O' : 'X';
+
+      this.setState({
+        //[history].contact(hisotries)がうまくいかないのはなぜ？
+        histories: [history].concat(histories),
+        step: histories.length,
+      })
+
+      console.log(this.state.histories)
+      console.log(this.state.step)
+    }
+    
   }
 
+  toggleClick = () => {
+    const histories = this.state.histories;
+    histories.sort((a, b) => {
+      return a > b? 1:-1
+    })
+
+    //既に選択されている配列があれば取得
+    const selected = histories.findIndex((e) => e.selected === true);
+    if(selected !== -1){
+      this.jumpTo(selected)
+    }
+
+    this.setState({
+      histories: histories,
+      isToggleOn: !this.state.isToggleOn
+    })
+
+  }
 
   jumpTo(step){
     const histories = this.state.histories.map((history, index) => {
-      history.selected = index === step;
+      history.selected = index === step
       return history;
     })
+
     this.setState({
       histories: histories,
       step: step,
-    });
+    })
   }
 
   render() {
@@ -118,16 +144,27 @@ class Game extends React.Component {
     const current = histories[histories.length - 1]
     const winner = calculateWinner(current.squares);
     const status = winner ? "Winner: " + winner : "Next player: " + (this.state.step % 2 === 0 ? "X" : "O");
-
     const moves = histories.map((history, index) =>{
-      const desc = index ? `Go to index # ${index}` : 'Go to game start';
-      return (
-        <li key={index}>
-          <button onClick={() => {
-            this.jumpTo(index);
-          }} style={history.selected ? {fontWeight: 'bold'} : { fontWeight: 'normal'}} >{desc}</button>
-        </li>
-      )
+      if( this.state.isToggleOn){
+        const desc = index ? `Go to index # ${index}` : 'Go to game start'
+        return (
+          <li key={index}>
+            <button onClick={() => {
+              this.jumpTo(index);
+            }} style = {history.selected ? {fontWeight: 'bold'} : { fontWeight: 'normal'}} >{desc}</button>
+          </li>
+        )
+      }else {
+        const reverseindex = (histories.length - 1)- index
+        const asc = reverseindex ? `Go to index # ${reverseindex}` : 'Go to game start'
+        return (
+          <li key={index}>
+            <button onClick={() => {
+              this.jumpTo(index);
+            }} style = {history.selected ? {fontWeight: 'bold'} : { fontWeight: 'normal'}} >{asc}</button>
+          </li>
+        )
+      }
     })
 
     return (
@@ -145,7 +182,9 @@ class Game extends React.Component {
               : <p>Let's play</p>}
           </div>
           <ol>{moves}</ol>
-          <Toggle />
+          <button onClick={this.toggleClick}>
+            {this.state.isToggleOn ? '降順' : '昇順'}
+          </button>
         </div>
       </div>
     );
