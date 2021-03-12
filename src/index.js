@@ -134,7 +134,11 @@ class Game extends React.Component {
 
     const winner = calculateWinner(current.squares);
     const winline = winner ? winner.line : null
-    const status = winner ? "Winner: " + winner.winner : "Next player: " + (this.state.step % 2 === 0 ? "X" : "O");
+    const status = winner 
+      ? (winner === "Draw"
+        ? winner
+        : "Winner: " + winner.winner )
+      :"Next player: " + (this.state.step % 2 === 0 ? "X" : "O");
 
     const moves = histories.map((history, index) =>{ 
       return (this.listCreate(history, this.state.isToggleOn? index : (histories.length - 1) - index))
@@ -210,5 +214,10 @@ function calculateWinner(squares) {
       return {winner: squares[a], line:lines[i]};
     }
   }
+
+  if(!squares.includes(null)) {
+    return 'Draw';
+  }
+
   return null;
 }
