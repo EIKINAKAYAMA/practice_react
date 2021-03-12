@@ -4,26 +4,31 @@ import './index.css';
 
 function Square(props) {
   return (
-    <button className="square" onClick={props.onClick}>
+    <button className="square" onClick={() => props.onClick()} style = {{backgroundColor : props.backgroundcolor}}>
       {props.value}
     </button>
   );
 }
 
 class Board extends React.Component {
-
   renderSquare(i) {
-    return <Square key={`b${i}`} value={this.props.squares[i]} onClick ={() => this.props.onClick(i)}/>;
+    return <Square key={`b${i}`} 
+    value={this.props.squares[i]}
+    onClick ={() => this.props.onClick(i)}
+    backgroundcolor = {
+      this.props.winline ? this.props.winline.includes(i)?  "blue" : null :null //勝利時、勝利マスの色付け：勝利時、勝利外のマスの色付け：常時の色付け
+    }/>; //propsで渡す引数（value, onClick, color）
   }
-
+  
   // パラダイムについて考える
   render() {
     const board = [];
-
-    for(let i=0; i < 4; i++){
+    const boardline = 4;
+    
+    for(let i=0; i < boardline; i++){
       const row = [];
-      for(let j = 0; j < 4; j++){
-        const num = i * 4 + j;
+      for(let j = 0; j < boardline; j++){
+        const num = i * boardline + j;
         row.push(this.renderSquare(num));
       }
       board.push(<div key={`a${i}`} className="board-row">{row}</div>)
@@ -63,10 +68,10 @@ class Game extends React.Component {
       selected: false,
     }
 
-    // 勝利判定、勝利の場合はXかOが返却、判定負荷の場合はNULLが返却
-    if (calculateWinner(history.squares) || history.squares[i]) {
+    if(calculateWinner(history.squares) || history.squares[i]) {
       return;
     }
+
 
     histories.forEach(history => history.selected = false)
     history.squares[i] = histories.length % 2 === 0 ? 'O' : 'X';
@@ -110,7 +115,6 @@ class Game extends React.Component {
   }
 
   listCreate(history, index){
-    console.log(history, index)
    const order = index ? `Go to index # ${index}` : 'Go to game start'
    return (
     <li key={index}>
@@ -129,12 +133,13 @@ class Game extends React.Component {
       : (this.state.isToggleOn ? histories[histories.length - 1] : histories[0]) //履歴選択がない場合は、 昇降順に応じた最新歴がCurrent
 
     const winner = calculateWinner(current.squares);
-    const status = winner ? "Winner: " + winner : "Next player: " + (this.state.step % 2 === 0 ? "X" : "O");
+    const winline = winner ? winner.line : null
+    const status = winner ? "Winner: " + winner.winner : "Next player: " + (this.state.step % 2 === 0 ? "X" : "O");
 
     const moves = histories.map((history, index) =>{ 
       return (this.listCreate(history, this.state.isToggleOn? index : (histories.length - 1) - index))
     })
-    
+
     return (
       <div className="game">
         <div className="game-board">
@@ -144,6 +149,7 @@ class Game extends React.Component {
                 ?this.state.histories[this.state.step].squares
                 : this.state.histories[(this.state.histories.length - 1)- this.state.step].squares}
             onClick={(i) => this.handleClick(i)}
+            winline= {winline}
           />
         </div>
         <div className="game-info">
@@ -201,7 +207,7 @@ function calculateWinner(squares) {
     const [a, b, c] = lines[i];
     //squares[a],squares[b],squares[c]がすべて同じ値であれば、squares[a]を返す
     if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-      return squares[a];
+      return {winner: squares[a], line:lines[i]};
     }
   }
   return null;
